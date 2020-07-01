@@ -10,7 +10,8 @@ FW_16K ?= 0
 
 CFLAGS += $(build_args)
 
-SDK_ROOT := /home/benjamin/Dokument/nrf51822/sdk
+#modify here.
+SDK_ROOT := /home/chans/Downloads/nRF5_SDK_12.3.0_d7731ad
 PROJ_DIR := .
 
 SD_PATH := $(SDK_ROOT)/components/softdevice/s130/hex/s130_nrf51_2.0.1_softdevice.hex
@@ -64,11 +65,11 @@ SRC_FILES += \
   $(PROJ_DIR)/crc.c \
   $(PROJ_DIR)/packet.c \
   $(PROJ_DIR)/buffer.c
-  
+
 ifeq ($(FW_16K),0)
 SRC_FILES += $(PROJ_DIR)/esb_timeslot.c
 else
-CFLAGS += -DFW_16K  
+CFLAGS += -DFW_16K
 endif
 
 # Include folders common to all targets
@@ -196,7 +197,7 @@ CFLAGS +=  -Wall -O3 -g3 #-Werror
 CFLAGS += -mfloat-abi=soft
 # keep every function in separate section, this allows linker to discard unused ones
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
-CFLAGS += -fno-builtin --short-enums 
+CFLAGS += -fno-builtin --short-enums
 
 #CFLAGS += -DDEBUG
 
@@ -251,4 +252,3 @@ merge_hex: $(TARGET_PATH)
 
 upload_merged_bin:
 	openocd -f openocd.cfg -c "program hex/merged.bin verify reset exit"
-	
