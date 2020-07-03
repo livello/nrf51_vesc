@@ -702,5 +702,6 @@ int main(void) {
 		}
 
 		power_manage();
+        nrf_delay_us(40000);
 	}
 }
