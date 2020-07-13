@@ -243,7 +243,8 @@ static void gap_params_init(void) {
 
 /**
  * @brief  Event handler to be called for handling received data.
- * this calls VESC's packet_process_byte function in packet.c
+ *         this calls VESC's packet_process_byte function in packet.c
+ *         Phone -> BLE
  * https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v12.0.0%2Fstructble__nus__init__t.html
  * @param  p_nus :
  * @param  p_data :
@@ -581,7 +582,7 @@ void rfhelp_send_data_crc(uint8_t *data, unsigned int len) {
 
 /**
  * @brief  ble -> VESC
- *
+ * these process function is called when the try_decode_packet() is succeed.
  * @param  data :
  * @param  len :
  */
