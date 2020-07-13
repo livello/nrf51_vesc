@@ -675,10 +675,9 @@ int main(void) {
 
 	// Wait for the external oscillator to start up
 	while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0) {}
-
+#endif
 	nrf_gpio_cfg_output(LED_PIN);
 	nrf_gpio_pin_clear(LED_PIN);
-#endif
 
 	APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
 	uart_init();
