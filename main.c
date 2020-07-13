@@ -166,21 +166,21 @@ APP_TIMER_DEF(m_nrf_timer);
 #endif
 
 // Private variables
-static ble_nus_t                        m_nus;
+static ble_nus_t                        m_nus;                                      //NUS: Nordic UART Service initialization structure. /**https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v11.0.0%2Fgroup__ble__sdk__srv__nus.html**/
 static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;
-static ble_uuid_t                       m_adv_uuids[] = {{BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}};
+static ble_uuid_t                       m_adv_uuids[] = {{BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}}; /**https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.s132.api.v2.0.0%2Fstructble__uuid__t.html**/
 static bool								m_is_enabled = EN_DEFAULT;
 static bool								m_uart_error = false;
 static int								m_other_comm_disable_time = 0;
 
 static app_uart_comm_params_t m_uart_comm_params = {
-		UART_RX,
-		EN_DEFAULT ? UART_TX : UART_TX_DISABLED,
-		0,
-		0,
-		APP_UART_FLOW_CONTROL_DISABLED,
-		false,
-		UART_BAUDRATE_BAUDRATE_Baud115200
+		UART_RX,                                     //rx_pin_no
+		EN_DEFAULT ? UART_TX : UART_TX_DISABLED,     //tx_pin_no
+		0,                                           //rts_pin_no
+		0,                                           //cts_pin_no
+		APP_UART_FLOW_CONTROL_DISABLED,              //flow_control
+		false,                                       //use_parity
+		UART_BAUDRATE_BAUDRATE_Baud115200            //baud_rate
 };
 
 void my_printf(const char* format, ...) {
@@ -210,6 +210,14 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name) {
 	app_error_handler(0xDEADBEEF, line_num, p_file_name);
 }
 
+
+/**
+ * @brief
+ * GAP is an acronym for the Generic Access Profile, and it controls connections and advertising in Bluetooth.
+ * GAP is what makes your device visible to the outside world,
+ * and determines how two devices can (or can't) interact with each other
+ * quoted from: https://learn.adafruit.com/introduction-to-bluetooth-low-energy/gap
+ */
 static void gap_params_init(void) {
 	uint32_t                err_code;
 	ble_gap_conn_params_t   gap_conn_params;
@@ -233,6 +241,14 @@ static void gap_params_init(void) {
 	APP_ERROR_CHECK(err_code);
 }
 
+/**
+ * @brief  Event handler to be called for handling received data.
+ * this calls VESC's packet_process_byte function in packet.c
+ * https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v12.0.0%2Fstructble__nus__init__t.html
+ * @param  p_nus :
+ * @param  p_data :
+ * @param  length :
+ */
 static void nus_data_handler(ble_nus_t * p_nus, uint8_t * p_data, uint16_t length) {
 	(void)p_nus;
 
@@ -266,6 +282,13 @@ static void conn_params_error_handler(uint32_t nrf_error) {
 	APP_ERROR_HANDLER(nrf_error);
 }
 
+
+/**
+ * @brief  Connection Parameters Module init structure.
+ * This contains all options and data needed for initialization of the connection parameters negotiation module.
+ * https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v12.0.0%2Fstructble__conn__params__init__t.html
+ *
+ */
 static void conn_params_init(void) {
 	uint32_t               err_code;
 	ble_conn_params_init_t cp_init;
@@ -555,6 +578,13 @@ void rfhelp_send_data_crc(uint8_t *data, unsigned int len) {
 }
 #endif
 
+
+/**
+ * @brief  ble -> VESC
+ *
+ * @param  data :
+ * @param  len :
+ */
 static void process_packet_ble(unsigned char *data, unsigned int len) {
 #ifndef FW_16K
 	if (data[0] == COMM_ERASE_NEW_APP ||
@@ -572,6 +602,12 @@ static void process_packet_ble(unsigned char *data, unsigned int len) {
 #endif
 }
 
+/**
+ * @brief  VESC -> BLE
+ *
+ * @param  data :
+ * @param  len :
+ */
 static void process_packet_vesc(unsigned char *data, unsigned int len) {
 	if (data[0] == COMM_EXT_NRF_ESB_SET_CH_ADDR) {
 #ifndef FW_16K
@@ -702,6 +738,5 @@ int main(void) {
 		}
 
 		power_manage();
-        nrf_delay_us(40000);
 	}
 }

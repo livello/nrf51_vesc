@@ -64,6 +64,13 @@ void packet_reset(int handler_num) {
 	m_handler_states[handler_num].bytes_left = 0;
 }
 
+/**
+ * @brief
+ *
+ * @param  data :
+ * @param  len :
+ * @param  handler_num :
+ */
 void packet_send_packet(unsigned char *data, unsigned int len, int handler_num) {
 	if (len == 0 || len > PACKET_MAX_PL_LEN) {
 		return;
@@ -130,6 +137,13 @@ void packet_timerfunc(void) {
 	}
 }
 
+/**
+ * @brief  Try decoding the packet at various offsets until it succeeds,
+ *         or until we run out of data.
+ *
+ * @param  rx_data :
+ * @param  handler_num :
+ */
 void packet_process_byte(uint8_t rx_data, int handler_num) {
 	PACKET_STATE_t *handler = &m_handler_states[handler_num];
 
