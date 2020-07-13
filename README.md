@@ -37,7 +37,7 @@ Note that a 10 uF ceremaic capacitor between vcc and gnd close to the NRF51 modu
 # Eunchan's note: compile the code
 1. download sdk here
 https://www.nordicsemi.com/Products/Low-power-short-range-wireless/nRF51822/Download#infotabs
-nrf51822 uses sdk version 10
+nrf51822 uses sdk version 12.3.0
 download and unzip somewhere in your pc
 for example, /home/chans/Downloads/nRF5_SDK_12.3.0_d7731ad
 
@@ -55,6 +55,7 @@ modify GNU_INSTALL_ROOT to the place where you unzip the (2) step
 GNU_INSTALL_ROOT := /home/chans/Downloads/gcc-arm-none-eabi-4_9-2015q3
 
 5. run "make" in  this source code
+./build_all/rebuild_all
 
 6. sudo apt install srecord
    install srecord
