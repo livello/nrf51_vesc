@@ -17,8 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
-#ifndef PACKET_H_
-#define PACKET_H_
+#ifndef VESC_PACKET_H_
+#define VESC_PACKET_H_
 
 #include <stdint.h>
 #include <stdbool.h>

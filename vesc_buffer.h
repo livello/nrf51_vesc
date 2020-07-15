@@ -17,8 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
-#ifndef BUFFER_H_
-#define BUFFER_H_
+#ifndef VESC_BUFFER_H_
+#define VESC_BUFFER_H_
 
 #include <stdint.h>
 

@@ -15,8 +15,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
-#ifndef DATATYPES_H_
-#define DATATYPES_H_
+#ifndef VESC_DATATYPES_H_
+#define VESC_DATATYPES_H_
 
 #include <stdint.h>
 #include <stdbool.h>

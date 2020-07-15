@@ -18,7 +18,7 @@
     */
 
 #include <string.h>
-#include "packet.h"
+#include "vesc_packet.h"
 #include "crc.h"
 
 /**
@@ -144,7 +144,7 @@ void packet_timerfunc(void) {
  * @param  rx_data :
  * @param  handler_num :
  */
-void packet_process_byte(uint8_t rx_data, int handler_num) {
+void packet_process_byte(unsigned char rx_data, int handler_num) {
 	PACKET_STATE_t *handler = &m_handler_states[handler_num];
 
 	handler->rx_timeout = PACKET_RX_TIMEOUT;
@@ -228,7 +228,7 @@ void packet_process_byte(uint8_t rx_data, int handler_num) {
  * -1: Invalid structure
  * -2: OK so far, but not enough data
  */
-static int try_decode_packet(unsigned char *buffer, unsigned int in_len,
+int try_decode_packet(unsigned char *buffer, unsigned int in_len,
 		void(*process_func)(unsigned char *data, unsigned int len), int *bytes_left) {
 	*bytes_left = 0;
 
