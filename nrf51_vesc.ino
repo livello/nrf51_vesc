@@ -180,8 +180,9 @@ void setup(void)
     // Change Mode LED Activity
     Serial.println(F("Change LED activity to " MODE_LED_BEHAVIOUR));
     ble.sendCommandCheckOK("AT+HWModeLED=" MODE_LED_BEHAVIOUR);
-    ble.sendCommandCheckOK("AT+BAUDRATE=115200");
   }
+  ble.sendCommandCheckOK("AT+BAUDRATE=115200");
+
 
   // Set module to DATA mode
   Serial.println( F("Switching to DATA mode!") );
