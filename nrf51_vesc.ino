@@ -303,7 +303,7 @@ long lastRequestMillis;
 void looping_function() {
   if (thisMainLoopMillis - lastDataMillis > 50 && !blePassMode && thisMainLoopMillis - lastRequestMillis > 50) {
     lastRequestMillis = thisMainLoopMillis;
-    // UART.requestVescGetValues();
+    UART.requestVescGetValues();
 
 #ifdef DEBUG
     Serial.println("request data manually");
