@@ -122,6 +122,9 @@ void ble_send_buffer(unsigned char *data, unsigned int len) {
     Serial.print(",");
   }
   Serial.println();
+  UART.processReadPacket(data);
+  Serial.println("rpm: ");
+  Serial.println(UART.data.rpm);
 }
 
 void uart_send_buffer(unsigned char *data, unsigned int len) {

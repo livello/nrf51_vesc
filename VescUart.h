@@ -112,6 +112,14 @@ class VescUart
 		 */
 		void printVescValues(void);
 
+				/**
+		 * @brief      Extracts the data from the received payload
+		 *
+		 * @param      message  - The payload to extract data from
+		 * @return     True if the process was a success
+		 */
+		inline int processReadPacket(uint8_t * message);
+
 	private:
 
 		/** Variabel to hold the reference to the Serial object to use for UART */
@@ -151,13 +159,6 @@ class VescUart
 		 */
 		bool unpackPayload(uint8_t * message, int lenMes, uint8_t * payload);
 
-		/**
-		 * @brief      Extracts the data from the received payload
-		 *
-		 * @param      message  - The payload to extract data from
-		 * @return     True if the process was a success
-		 */
-		inline int processReadPacket(uint8_t * message);
 
 		/**
 		 * @brief      Help Function to print uint8_t array over Serial for Debug
