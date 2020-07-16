@@ -265,6 +265,7 @@ void loop(void)
 
     lastDataMillis = thisMainLoopMillis;
     sleepMode = false;
+    blePassMode = true;
   }
 
 
