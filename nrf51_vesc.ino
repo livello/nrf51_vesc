@@ -134,11 +134,6 @@ void setup(void)
   packet_init(uart_send_buffer, process_packet_vesc, PACKET_VESC);
   packet_init(ble_send_buffer, process_packet_ble, PACKET_BLE);
 
-
-
-  while (!Serial);  // required for Flora & Micro
-  delay(500);
-
   Serial.begin(115200);
 
   Serial1.begin(115200);
@@ -176,10 +171,6 @@ void setup(void)
 
   ble.verbose(false);  // debug info is a little annoying after this point!
 
-  /* Wait for connection */
-  while (! ble.isConnected()) {
-//    delay(500);
-  }
 
   Serial.println(F("******************************"));
 
