@@ -2,18 +2,30 @@
 #include <SPI.h>
 #include "Adafruit_BLE.h"
 #include "Adafruit_BluefruitLE_SPI.h"
-#include "Adafruit_BluefruitLE_UART.h"
+//#include "Adafruit_BluefruitLE_UART.h"
 
 #include "BluefruitConfig.h"
 
-#if SOFTWARE_SERIAL_AVAILABLE
-#include <SoftwareSerial.h>
-#endif
+//#if SOFTWARE_SERIAL_AVAILABLE
+//#include <SoftwareSerial.h>
+//#endif
 
 #include "vesc_packet.h"
 #include "crc.h"
 #include "vesc_buffer.h"
 #include "vesc_datatypes.h"
+
+#include "VescUart.h"
+#include <Adafruit_NeoPixel.h>
+
+#define DEBUG 1
+#define PIN         5// On Trinket or Gemma, suggest changing this to 1
+#define NUMPIXELS   32
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+
+VescUart UART;
+
+
 
 #define PACKET_VESC            0
 #define PACKET_BLE            1
@@ -74,6 +86,23 @@ Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_
 //                             BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
 
 
+
+
+
+
+bool blePassMode = true;
+long lastTime_COMM_GET_VALUES = 0;
+
+long lastMainloopMillis = 0;
+long thisMainLoopMillis = 0;
+long lastBLEms = 0;
+long lastDataMillis = 0;
+
+bool sleepMode = false;
+
+
+
+
 // A small helper
 void error(const __FlashStringHelper*err) {
   Serial.println(err);
@@ -85,15 +114,25 @@ void error(const __FlashStringHelper*err) {
 
 
 void ble_send_buffer(unsigned char *data, unsigned int len) {
+  Serial.println("vesc -> ble");
   for (int i = 0; i < len; i++) {
     ble.write(data[i]);
+    
+    Serial.print(data[i]);
+    Serial.print(",");
   }
+  Serial.println();
 }
 
 void uart_send_buffer(unsigned char *data, unsigned int len) {
+  Serial.println("ble -> vesc");
   for (int i = 0; i < len; i++) {
     Serial1.write(data[i]);
+    
+    Serial.print(data[i]);
+    Serial.print(",");
   }
+  Serial.println();
 }
 
 
@@ -105,6 +144,7 @@ void uart_send_buffer(unsigned char *data, unsigned int len) {
 */
 void process_packet_ble(unsigned char *data, unsigned int len) {
   packet_send_packet(data, len, PACKET_VESC);
+  lastDataMillis = thisMainLoopMillis;
 }
 
 /**
@@ -115,6 +155,7 @@ void process_packet_ble(unsigned char *data, unsigned int len) {
 */
 void process_packet_vesc(unsigned char *data, unsigned int len) {
   packet_send_packet(data, len, PACKET_BLE);
+  
 }
 
 
@@ -130,7 +171,6 @@ void setup(void)
   packet_init(ble_send_buffer, process_packet_ble, PACKET_BLE);
 
   Serial.begin(115200);
-
   Serial1.begin(115200);
   Serial.println(F("Adafruit Bluefruit Command <-> Data Mode Example"));
   Serial.println(F("------------------------------------------------"));
@@ -185,20 +225,127 @@ void setup(void)
   ble.setMode(BLUEFRUIT_MODE_DATA);
 
   Serial.println(F("******************************"));
+
+
+  // VESC Serial Port Set
+  UART.setSerialPort(&Serial1);
+
 }
+
 
 
 void loop(void)
 {
+  thisMainLoopMillis = millis();
+  //  standalone mode without BLE
+  if (thisMainLoopMillis - lastBLEms > 5000) {
+    blePassMode  = false;
+  }
+
+  // sleep mode
+  if (thisMainLoopMillis - lastDataMillis  > 10000) {
+    sleepMode = true;
+  }
+
+
+  // HC12->BLE =========================================================
   while (Serial1.available())
   {
     packet_process_byte((unsigned char)Serial1.read(), PACKET_VESC);
     //ble.write(Serial.read());
+    sleepMode = false;
   }
 
+  // BLE->HC12 ===================================================================
   while ( ble.available() )
   {
     unsigned char c = ble.read();
     packet_process_byte(c, PACKET_BLE);
+    lastBLEms = thisMainLoopMillis;
+
+    lastDataMillis = thisMainLoopMillis;
+    sleepMode = false;
   }
+
+
+  spin(20);
+
+}
+
+
+// SPIN ======================================================================================
+
+void spin(const int desiredMillis) {
+  static long lastSpinTime;
+
+  if (thisMainLoopMillis - lastSpinTime >  desiredMillis) {
+    lastSpinTime = thisMainLoopMillis;
+    looping_function();
+
+    if (sleepMode)
+    {
+      //      sleep();
+    }
+  }
+}
+
+
+int brakeState = 0;
+enum BRAKE_CASE  {NO_BRAKE, NEUTRAL, ACCELERATION, BRAKE_DECELERATION, BRAKE_REVERSE };
+int before_brake_status = 0;
+
+bool blePassModeFirstTime = true;
+
+int ledCount = 0;
+long lastRequestMillis;
+
+void looping_function() {
+  if (thisMainLoopMillis - lastDataMillis > 50 && !blePassMode && thisMainLoopMillis - lastRequestMillis > 50) {
+    lastRequestMillis = thisMainLoopMillis;
+    // UART.requestVescGetValues();
+
+#ifdef DEBUG
+    Serial.println("request data manually");
+    // Serial.println(thisMainLoopMillis - lastDataMillis);
+#endif
+
+  }
+
+  if (blePassMode) {
+    if (blePassModeFirstTime) {
+      blePassModeFirstTime = false;
+      setColor(100, 5, 5);
+      pixels.show();
+    }
+  } else {
+    blePassModeFirstTime = true;
+  }
+
+  //  check_brake();
+
+}
+
+
+void setColor(int r, int g, int b) {
+  for (int i = 0; i < NUMPIXELS; i++) {
+    pixels.setPixelColor(i, pixels.Color(r, g, b));
+  }
+
+}
+
+void sleep() {
+  for (int i = 0; i < 25; i ++) {
+    setColor(i, i / 10, i / 10);
+    pixels.show();
+    delay(10);
+  }
+  for (int i = 25; i >= 0; i --) {
+    setColor(i, i / 10, i / 10);
+    delay(10);
+    pixels.show();
+  }
+  delay(3000);
+}
+
+void enterBLEModeLED() {
 }
