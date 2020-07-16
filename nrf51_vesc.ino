@@ -19,7 +19,7 @@
 #include <Adafruit_NeoPixel.h>
 
 #define DEBUG 1
-#define PIN         5// On Trinket or Gemma, suggest changing this to 1
+#define PIN         5 // On Trinket or Gemma, suggest changing this to 1
 #define NUMPIXELS   32
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
@@ -114,28 +114,28 @@ void error(const __FlashStringHelper*err) {
 
 
 void ble_send_buffer(unsigned char *data, unsigned int len) {
-  Serial.println("vesc -> ble");
+  // Serial.println("vesc -> ble");
   for (int i = 0; i < len; i++) {
     ble.write(data[i]);
     
-    Serial.print(data[i]);
-    Serial.print(",");
+    // Serial.print(data[i]);
+    // Serial.print(",");
   }
-  Serial.println();
+  // Serial.println();
   UART.processReadPacket(data);
   Serial.println("rpm: ");
   Serial.println(UART.data.rpm);
 }
 
 void uart_send_buffer(unsigned char *data, unsigned int len) {
-  Serial.println("ble -> vesc");
+  // Serial.println("ble -> vesc");
   for (int i = 0; i < len; i++) {
     Serial1.write(data[i]);
     
-    Serial.print(data[i]);
-    Serial.print(",");
+    // Serial.print(data[i]);
+    // Serial.print(",");
   }
-  Serial.println();
+  // Serial.println();
 }
 
 
@@ -232,6 +232,7 @@ void setup(void)
 
   // VESC Serial Port Set
   UART.setSerialPort(&Serial1);
+  pixels.begin();
 
 }
 
@@ -288,7 +289,7 @@ void spin(const int desiredMillis) {
 
     if (sleepMode)
     {
-      //      sleep();
+      sleep();
     }
   }
 }
@@ -338,12 +339,13 @@ void setColor(int r, int g, int b) {
 }
 
 void sleep() {
-  for (int i = 0; i < 25; i ++) {
+  Serial.println("Sleep Mode");
+  for (int i = 0; i < 10; i ++) {
     setColor(i, i / 10, i / 10);
     pixels.show();
     delay(10);
   }
-  for (int i = 25; i >= 0; i --) {
+  for (int i = 10; i >= 0; i --) {
     setColor(i, i / 10, i / 10);
     delay(10);
     pixels.show();
