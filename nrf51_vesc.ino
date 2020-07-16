@@ -157,6 +157,7 @@ void setup(void)
       error(F("Couldn't factory reset"));
     }
   }
+  ble.sendCommandCheckOK("AT+GAPDEVNAME=CHANS_VESC");
 
   /* Disable command echo from Bluefruit */
   ble.echo(false);
