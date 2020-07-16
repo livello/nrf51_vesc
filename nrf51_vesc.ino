@@ -18,8 +18,6 @@
 #define PACKET_VESC            0
 #define PACKET_BLE            1
 
-
-
 /*=========================================================================
     APPLICATION SETTINGS
 
@@ -128,9 +126,6 @@ void process_packet_vesc(unsigned char *data, unsigned int len) {
 /**************************************************************************/
 void setup(void)
 {
- 
-
-  //eunchan
   packet_init(uart_send_buffer, process_packet_vesc, PACKET_VESC);
   packet_init(ble_send_buffer, process_packet_ble, PACKET_BLE);
 
@@ -190,27 +185,17 @@ void setup(void)
   ble.setMode(BLUEFRUIT_MODE_DATA);
 
   Serial.println(F("******************************"));
-
-
 }
 
-/**************************************************************************/
-/*!
-    @brief  Constantly poll for new command or response data
-*/
-/**************************************************************************/
+
 void loop(void)
 {
-  // Check for user input
-//  char n, inputs[BUFSIZE + 1];
-
   while (Serial1.available())
   {
     packet_process_byte((unsigned char)Serial1.read(), PACKET_VESC);
     //ble.write(Serial.read());
   }
 
-  // Echo received data
   while ( ble.available() )
   {
     unsigned char c = ble.read();
