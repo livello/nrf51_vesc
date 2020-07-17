@@ -398,10 +398,11 @@ void check_brake(void) {
   
 
   int tempRPM = UART.data.rpm;
-  if (tempRPM > 15000) {
-    tempRPM = 15000;
+  const int MAX_RPM_FOR_LED = 15000;
+  if (tempRPM > MAX_RPM_FOR_LED) {
+    tempRPM = MAX_RPM_FOR_LED;
   }
-  int rpm_mapped = map(UART.data.rpm, 0, 20000, 0, 255);
+  int rpm_mapped = map(UART.data.rpm, 0, MAX_RPM_FOR_LED, 0, 96);
   if (rpm_mapped < 0) {
     rpm_mapped  = 0;
   }
