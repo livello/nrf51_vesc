@@ -416,14 +416,17 @@ void check_brake(void) {
     case BRAKE_DECELERATION:
       ledCount++;
       
-      if (ledCount < 5) {
+      if (ledCount <= 3) {
         setColor(255, 0, 0);
 
-      } else if (ledCount < 25) {
+      } else if (ledCount > 3 && ledCount < 6) {
         setColor(50, 0, 0);
-      } else {
+
+      } else if (ledCount >= 6){
+        setColor(50, 0, 0);
         ledCount = 0;
       }
+      Serial.println(ledCount);
 
       break;
 
@@ -436,7 +439,9 @@ void check_brake(void) {
       //      } else {
       //        ledCount = 0;
       //      }
-      setColor(0, rpm_mapped / 2, rpm_mapped);
+      
+      // setColor(0, rpm_mapped / 2, rpm_mapped);
+      setColor(50, 0, 0);
 
 
       break;
@@ -447,12 +452,12 @@ void check_brake(void) {
 
 
     case BRAKE_REVERSE:
-    ledCount+=10;
-      if (ledCount < 255) {
+    ledCount++;
+      if (ledCount < 10) {
         setColor(ledCount, 0, 0);
-      } else if (ledCount < 512) {
-        setColor(256 - ledCount, 0, 0);
-      } else {
+      } else if (ledCount < 20) {
+        setColor(20 - ledCount, 0, 0);
+      } else if (ledCount >= 20){
         ledCount = 0;
       }
 
@@ -466,6 +471,8 @@ void check_brake(void) {
 
 
   before_brake_status = brakeState;
+}
+
 float checkBatteryVoltage(){
   float measuredvbat = analogRead(VBATPIN);
    measuredvbat *= 2;    // we divided by 2, so multiply back
