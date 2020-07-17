@@ -25,6 +25,7 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 VescUart UART;
 
+#define VBATPIN A7
 
 
 #define PACKET_VESC            0
@@ -362,6 +363,7 @@ void sleep() {
     delay(10);
     pixels.show();
   }
+  Serial.println(checkBatteryVoltage());
   delay(3000);
 }
 
@@ -463,4 +465,11 @@ void check_brake(void) {
 
 
   before_brake_status = brakeState;
+float checkBatteryVoltage(){
+  float measuredvbat = analogRead(VBATPIN);
+   measuredvbat *= 2;    // we divided by 2, so multiply back
+   measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
+   measuredvbat /= 1024; // convert to voltage
+   Serial.print("VBat: " ); Serial.println(measuredvbat);
+   return measuredvbat;
 }
