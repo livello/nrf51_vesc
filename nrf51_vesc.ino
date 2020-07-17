@@ -123,8 +123,11 @@ void ble_send_buffer(unsigned char *data, unsigned int len) {
   }
   // Serial.println();
   UART.processReadPacket(data);
-  Serial.println("rpm: ");
+  pixels.show();
+  #ifdef DEBUG
+  Serial.print("rpm,");
   Serial.println(UART.data.rpm);
+  #endif
 }
 
 void uart_send_buffer(unsigned char *data, unsigned int len) {
@@ -172,8 +175,11 @@ void setup(void)
 {
   packet_init(uart_send_buffer, process_packet_vesc, PACKET_VESC);
   packet_init(ble_send_buffer, process_packet_ble, PACKET_BLE);
-
+  
+  #ifdef DEBUG
   Serial.begin(115200);
+  #endif
+
   Serial1.begin(115200);
   Serial.println(F("Adafruit Bluefruit Command <-> Data Mode Example"));
   Serial.println(F("------------------------------------------------"));
@@ -237,7 +243,7 @@ void setup(void)
 }
 
 
-
+const int SPIN_MS = 25;
 void loop(void)
 {
   thisMainLoopMillis = millis();
@@ -258,6 +264,8 @@ void loop(void)
     packet_process_byte((unsigned char)Serial1.read(), PACKET_VESC);
     //ble.write(Serial.read());
     sleepMode = false;
+    lastDataMillis = thisMainLoopMillis;
+
   }
 
   // BLE->HC12 ===================================================================
@@ -273,7 +281,7 @@ void loop(void)
   }
 
 
-  spin(20);
+  spin(SPIN_MS);
 
 }
 
@@ -305,12 +313,13 @@ int ledCount = 0;
 long lastRequestMillis;
 
 void looping_function() {
-  if (thisMainLoopMillis - lastDataMillis > 50 && !blePassMode && thisMainLoopMillis - lastRequestMillis > 50) {
+  if (thisMainLoopMillis - lastDataMillis >= SPIN_MS && !blePassMode && thisMainLoopMillis - lastRequestMillis >= SPIN_MS) {
     lastRequestMillis = thisMainLoopMillis;
+    // pixels.show();
     UART.requestVescGetValues();
 
 #ifdef DEBUG
-    Serial.println("request data manually");
+    // Serial.println("request data manually");
     // Serial.println(thisMainLoopMillis - lastDataMillis);
 #endif
 
@@ -326,7 +335,8 @@ void looping_function() {
     blePassModeFirstTime = true;
   }
 
-  //  check_brake();
+   check_brake();
+
 
 }
 
@@ -339,7 +349,9 @@ void setColor(int r, int g, int b) {
 }
 
 void sleep() {
+  #ifdef DEBUG
   Serial.println("Sleep Mode");
+  #endif
   for (int i = 0; i < 10; i ++) {
     setColor(i, i / 10, i / 10);
     pixels.show();
@@ -354,4 +366,101 @@ void sleep() {
 }
 
 void enterBLEModeLED() {
+}
+
+
+void check_brake(void) {
+
+  if (UART.data.rpm > 1000000){
+    return;
+  }
+
+  // BRAKE_REVERSE
+  if (UART.data.rpm <= 0) {
+    brakeState = BRAKE_REVERSE;
+  }
+  // BRAKE_DECELERATION
+  else if (UART.data.avgMotorCurrent < 0) {
+    brakeState = BRAKE_DECELERATION;
+  }
+
+  // NEUTRAL
+  else if (UART.data.avgMotorCurrent == 0 && UART.data.rpm > 0 ) {
+    brakeState = NEUTRAL;
+  }
+
+  // ACCELERATION
+  else if (UART.data.avgMotorCurrent > 0 && UART.data.rpm > 0 ) {
+    brakeState = ACCELERATION;
+  }
+  
+
+  int tempRPM = UART.data.rpm;
+  if (tempRPM > 15000) {
+    tempRPM = 15000;
+  }
+  int rpm_mapped = map(UART.data.rpm, 0, 20000, 0, 255);
+  if (rpm_mapped < 0) {
+    rpm_mapped  = 0;
+  }
+
+  if (brakeState != before_brake_status) {
+    ledCount = 0;
+  }
+
+  switch (brakeState) {
+
+    case BRAKE_DECELERATION:
+      ledCount++;
+      
+      if (ledCount < 5) {
+        setColor(255, 0, 0);
+
+      } else if (ledCount < 25) {
+        setColor(50, 0, 0);
+      } else {
+        ledCount = 0;
+      }
+
+      break;
+
+    case NEUTRAL:
+
+      //      if (ledCount++ < 125) {
+      //        setColor(3, 0, 0);
+      //      } else if (ledCount++ < 130) {
+      //        setColor(30, 30, 30);
+      //      } else {
+      //        ledCount = 0;
+      //      }
+      setColor(0, rpm_mapped / 2, rpm_mapped);
+
+
+      break;
+
+    case ACCELERATION:
+      setColor(0, rpm_mapped, rpm_mapped);
+      break;
+
+
+    case BRAKE_REVERSE:
+    ledCount+=10;
+      if (ledCount < 255) {
+        setColor(ledCount, 0, 0);
+      } else if (ledCount < 512) {
+        setColor(256 - ledCount, 0, 0);
+      } else {
+        ledCount = 0;
+      }
+
+      break;
+
+    default:
+      break;
+
+
+  }
+
+
+  before_brake_status = brakeState;
 }
