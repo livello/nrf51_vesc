@@ -91,7 +91,7 @@ Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_
 
 
 
-bool blePassMode = true;
+bool blePassMode = false;
 long lastTime_COMM_GET_VALUES = 0;
 
 long lastMainloopMillis = 0;
@@ -329,7 +329,7 @@ void looping_function() {
   if (blePassMode) {
     if (blePassModeFirstTime) {
       blePassModeFirstTime = false;
-      setColor(100, 5, 5);
+      setColor(50, 5, 5);
       pixels.show();
     }
   } else {
@@ -349,17 +349,35 @@ void setColor(int r, int g, int b) {
 
 }
 
+void setColor(int r, int g, int b, int n) {
+  for (int i = 0; i < NUMPIXELS; i++) {
+    if (i < n) {
+      pixels.setPixelColor(i, pixels.Color(r, g, b));
+    } else {
+      pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+    }
+    
+  }
+
+}
+
 void sleep() {
   #ifdef DEBUG
   Serial.println("Sleep Mode");
   #endif
+  float checkedBatteryLevel = checkBatteryVoltage();
+  checkedBatteryLevel *= 100;
+  //3.4 - 4.2
+  int batteryCount = map((int)checkedBatteryLevel, 300, 420, 1, 8);
+
+
   for (int i = 0; i < 10; i ++) {
-    setColor(i, i / 10, i / 10);
+    setColor(i, i / 10, i / 10, batteryCount);
     pixels.show();
     delay(10);
   }
   for (int i = 10; i >= 0; i --) {
-    setColor(i, i / 10, i / 10);
+    setColor(i, i / 10, i / 10, batteryCount);
     delay(10);
     pixels.show();
   }
