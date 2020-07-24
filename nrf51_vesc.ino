@@ -320,23 +320,24 @@ void looping_function() {
 }
 
 
-void setColor(int r, int g, int b) {
-  for (int i = 0; i < NUMPIXELS; i++) {
-    pixels.setPixelColor(i, pixels.Color(r, g, b));
+void setColor(int r, int g, int b, int n=NUMPIXELS) {
+  if (r < 0 ){
+    r = 0;
+  }
+  if (g < 0 ){
+    g = 0;
+  }
+  if (b < 0 ){
+    b = 0;
   }
 
-}
-
-void setColor(int r, int g, int b, int n) {
   for (int i = 0; i < NUMPIXELS; i++) {
     if (i < n) {
       pixels.setPixelColor(i, pixels.Color(r, g, b));
     } else {
       pixels.setPixelColor(i, pixels.Color(0, 0, 0));
     }
-    
   }
-
 }
 
 void sleep() {
@@ -398,7 +399,9 @@ void check_brake(void) {
   if (tempRPM > MAX_RPM_FOR_LED) {
     tempRPM = MAX_RPM_FOR_LED;
   }
-  int rpm_mapped = map(UART.data.rpm, 0, MAX_RPM_FOR_LED, 0, 96);
+  
+  int rpm_mapped = map(tempRPM, 1000, MAX_RPM_FOR_LED, 0, 96);
+  int led_count_mapped = map(tempRPM, 1000, MAX_RPM_FOR_LED, 1, 32);
   if (rpm_mapped < 0) {
     rpm_mapped  = 0;
   }
@@ -443,7 +446,7 @@ void check_brake(void) {
       break;
 
     case ACCELERATION:
-      setColor(0, rpm_mapped, rpm_mapped);
+      setColor(0, 90 - rpm_mapped/2, rpm_mapped, led_count_mapped);
       break;
 
 
