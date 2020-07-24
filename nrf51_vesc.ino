@@ -90,13 +90,10 @@ Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_
 
 
 
-
-bool blePassMode = false;
 long lastTime_COMM_GET_VALUES = 0;
 
 long lastMainloopMillis = 0;
 long thisMainLoopMillis = 0;
-long lastBLEms = 0;
 long lastDataMillis = 0;
 
 bool sleepMode = false;
@@ -248,10 +245,6 @@ const int SPIN_MS = 25;
 void loop(void)
 {
   thisMainLoopMillis = millis();
-  //  standalone mode without BLE
-  if (thisMainLoopMillis - lastBLEms > 5000) {
-    blePassMode  = false;
-  }
 
   // sleep mode
   if (thisMainLoopMillis - lastDataMillis  > 10000) {
@@ -274,11 +267,9 @@ void loop(void)
   {
     unsigned char c = ble.read();
     packet_process_byte(c, PACKET_BLE);
-    lastBLEms = thisMainLoopMillis;
 
     lastDataMillis = thisMainLoopMillis;
     sleepMode = false;
-    blePassMode = true;
   }
 
 
@@ -308,13 +299,12 @@ int brakeState = 0;
 enum BRAKE_CASE  {NO_BRAKE, NEUTRAL, ACCELERATION, BRAKE_DECELERATION, BRAKE_REVERSE };
 int before_brake_status = 0;
 
-bool blePassModeFirstTime = true;
 
 int ledCount = 0;
 long lastRequestMillis;
 
 void looping_function() {
-  if (thisMainLoopMillis - lastDataMillis >= SPIN_MS && !blePassMode && thisMainLoopMillis - lastRequestMillis >= SPIN_MS) {
+  if (thisMainLoopMillis - lastDataMillis >= SPIN_MS  && thisMainLoopMillis - lastRequestMillis >= SPIN_MS) {
     lastRequestMillis = thisMainLoopMillis;
     // pixels.show();
     UART.requestVescGetValues();
@@ -326,19 +316,7 @@ void looping_function() {
 
   }
 
-  if (blePassMode) {
-    if (blePassModeFirstTime) {
-      blePassModeFirstTime = false;
-      setColor(50, 5, 5);
-      pixels.show();
-    }
-  } else {
-    blePassModeFirstTime = true;
-  }
-
    check_brake();
-
-
 }
 
 
