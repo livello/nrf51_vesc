@@ -296,7 +296,7 @@ void spin(const int desiredMillis) {
 
 
 int brakeState = 0;
-enum BRAKE_CASE  {NO_BRAKE, NEUTRAL, ACCELERATION, BRAKE_DECELERATION, BRAKE_REVERSE };
+enum BRAKE_CASE  {NO_BRAKE, NEUTRAL, ACCELERATION, BRAKE_DECELERATION, PARKING };
 int before_brake_status = 0;
 
 
@@ -344,39 +344,45 @@ void sleep() {
   #ifdef DEBUG
   Serial.println("Sleep Mode");
   #endif
-  float checkedBatteryLevel = checkBatteryVoltage();
-  checkedBatteryLevel *= 100;
-  //3.4 - 4.2
-  int batteryCount = map((int)checkedBatteryLevel, 300, 420, 1, 8);
-
-
-  for (int i = 0; i < 10; i ++) {
-    setColor(i, i / 10, i / 10, batteryCount);
-    pixels.show();
-    delay(10);
-  }
-  for (int i = 10; i >= 0; i --) {
-    setColor(i, i / 10, i / 10, batteryCount);
-    delay(10);
-    pixels.show();
-  }
-  Serial.println(checkBatteryVoltage());
+  batteryShow();
   delay(3000);
 }
 
 void enterBLEModeLED() {
 }
 
+void batteryShow(){
+  float checkedBatteryLevel = checkBatteryVoltage();
+    checkedBatteryLevel *= 100;
+    //3.4 - 4.2
+    int batteryCount = map((int)checkedBatteryLevel, 300, 420, 1, 8);
+
+
+    for (int i = 0; i < 15; i ++) {
+      setColor(i, 0, 0, batteryCount);
+      pixels.setPixelColor(7, pixels.Color(i, i>>1, i>>1));
+      pixels.show();
+      delay(2);
+    }
+    for (int i = 15; i >= 0; i --) {
+      setColor(i, 0, 0, batteryCount);
+      pixels.setPixelColor(7, pixels.Color(i, i>>1, i>>1));
+      delay(2);
+      pixels.show();
+    }
+    Serial.println(checkBatteryVoltage());
+}
 
 void check_brake(void) {
 
-  if (UART.data.rpm > 1000000){
+  if (abs(UART.data.rpm) > 1000000){
     return;
   }
 
-  // BRAKE_REVERSE
+/*
+  // PARKING
   if (UART.data.rpm <= 0) {
-    brakeState = BRAKE_REVERSE;
+    brakeState = PARKING;
   }
   // BRAKE_DECELERATION
   else if (UART.data.avgMotorCurrent < 0) {
@@ -392,9 +398,30 @@ void check_brake(void) {
   else if (UART.data.avgMotorCurrent > 0 && UART.data.rpm > 0 ) {
     brakeState = ACCELERATION;
   }
+  */
+   // PARKING
+
+  // BRAKE_DECELERATION
+  if (UART.data.avgMotorCurrent < 0) {
+    brakeState = BRAKE_DECELERATION;
+  }
+
+  // NEUTRAL
+  else if (UART.data.avgMotorCurrent == 0) {
+    if (UART.data.rpm == 0){
+        brakeState = PARKING;
+    } else {
+        brakeState = NEUTRAL;
+    }
+  }
+
+  // ACCELERATION
+  else if (UART.data.avgMotorCurrent > 0) {
+    brakeState = ACCELERATION;
+  }
   
 
-  int tempRPM = UART.data.rpm;
+  int tempRPM = abs(UART.data.rpm);
   const int MAX_RPM_FOR_LED = 15000;
   if (tempRPM > MAX_RPM_FOR_LED) {
     tempRPM = MAX_RPM_FOR_LED;
@@ -450,7 +477,7 @@ void check_brake(void) {
       break;
 
 
-    case BRAKE_REVERSE:
+    case PARKING:
     ledCount++;
       if (ledCount < 10) {
         setColor(ledCount, 0, 0);
