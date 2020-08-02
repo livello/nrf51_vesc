@@ -123,6 +123,8 @@ void error(const __FlashStringHelper*err) {
 
 void ble_send_buffer(unsigned char *data, unsigned int len) {
   // Serial.println("vesc -> ble");
+
+  // prevent sending IMU data from Feather to phone 
   if (data[0] == 65){
     return;
   }
