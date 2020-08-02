@@ -98,7 +98,17 @@ long lastDataMillis = 0;
 
 bool sleepMode = false;
 
+long lastVescMillis = 0;
+bool VESCTOOL_MODE = false;
 
+
+int brakeState = 0;
+enum BRAKE_CASE  {NO_BRAKE, NEUTRAL, ACCELERATION, BRAKE_DECELERATION, PARKING };
+int before_brake_status = 0;
+
+
+int ledCount = 0;
+long lastRequestMillis;
 
 
 // A small helper
@@ -113,18 +123,23 @@ void error(const __FlashStringHelper*err) {
 
 void ble_send_buffer(unsigned char *data, unsigned int len) {
   // Serial.println("vesc -> ble");
+  if (data[0] == 65){
+    return;
+  }
   for (int i = 0; i < len; i++) {
     ble.write(data[i]);
     
-    // Serial.print(data[i]);
-    // Serial.print(",");
+    Serial.print(data[i]);
+    Serial.print(",");
   }
-  // Serial.println();
+  Serial.println();
   UART.processReadPacket(data);
-  pixels.show();
+  if (!VESCTOOL_MODE){
+    pixels.show();
+  }  
   #ifdef DEBUG
-  Serial.print("rpm,");
-  Serial.println(UART.data.rpm);
+  //Serial.print("rpm,");
+  //Serial.println(UART.data.rpm);
   #endif
 }
 
@@ -224,6 +239,7 @@ void setup(void)
     Serial.println(F("Change LED activity to " MODE_LED_BEHAVIOUR));
     ble.sendCommandCheckOK("AT+HWModeLED=" MODE_LED_BEHAVIOUR);
   }
+  ble.sendCommandCheckOK("AT+BLEPOWERLEVEL=4");
   ble.sendCommandCheckOK("AT+BAUDRATE=115200");
 
 
@@ -251,6 +267,11 @@ void loop(void)
     sleepMode = true;
   }
 
+  // exit VESCTOOL_MODE
+  if (thisMainLoopMillis -  lastVescMillis > 3000) {
+    VESCTOOL_MODE = false;
+  }
+
 
   // HC12->BLE =========================================================
   while (Serial1.available())
@@ -270,9 +291,10 @@ void loop(void)
 
     lastDataMillis = thisMainLoopMillis;
     sleepMode = false;
+    
+    VESCTOOL_MODE = true;
+    lastVescMillis = thisMainLoopMillis;
   }
-
-
   spin(SPIN_MS);
 
 }
@@ -295,19 +317,13 @@ void spin(const int desiredMillis) {
 }
 
 
-int brakeState = 0;
-enum BRAKE_CASE  {NO_BRAKE, NEUTRAL, ACCELERATION, BRAKE_DECELERATION, PARKING };
-int before_brake_status = 0;
-
-
-int ledCount = 0;
-long lastRequestMillis;
-
 void looping_function() {
   if (thisMainLoopMillis - lastDataMillis >= SPIN_MS  && thisMainLoopMillis - lastRequestMillis >= SPIN_MS) {
     lastRequestMillis = thisMainLoopMillis;
     // pixels.show();
-    UART.requestVescGetValues();
+    if (!VESCTOOL_MODE){
+      UART.requestVescGetValues();
+    }
 
 #ifdef DEBUG
     // Serial.println("request data manually");
@@ -440,19 +456,25 @@ void check_brake(void) {
   switch (brakeState) {
 
     case BRAKE_DECELERATION:
-      ledCount++;
-      
-      if (ledCount <= 3) {
+      if (VESCTOOL_MODE){
         setColor(255, 0, 0);
-
-      } else if (ledCount > 3 && ledCount < 6) {
-        setColor(50, 0, 0);
-
-      } else if (ledCount >= 6){
-        setColor(50, 0, 0);
-        ledCount = 0;
       }
-      Serial.println(ledCount);
+      else {
+        ledCount++;
+        
+        if (ledCount <= 3) {
+          setColor(255, 0, 0);
+
+        } else if (ledCount > 3 && ledCount < 6) {
+          setColor(50, 0, 0);
+
+        } else if (ledCount >= 6){
+          setColor(50, 0, 0);
+          ledCount = 0;
+        }
+        Serial.println(ledCount);
+      }
+      
 
       break;
 
@@ -473,26 +495,40 @@ void check_brake(void) {
       break;
 
     case ACCELERATION:
-      setColor(0, 90 - rpm_mapped/2, rpm_mapped, led_count_mapped);
+      if (VESCTOOL_MODE){
+        setColor(0, 20, 20);
+      } else {
+        setColor(0, 90 - rpm_mapped/2, rpm_mapped, led_count_mapped);
+      }      
       break;
 
 
     case PARKING:
-    ledCount++;
-      if (ledCount < 10) {
-        setColor(ledCount, 0, 0);
-      } else if (ledCount < 20) {
-        setColor(20 - ledCount, 0, 0);
-      } else if (ledCount >= 20){
-        ledCount = 0;
+      if (VESCTOOL_MODE){
+        setColor(50, 0, 0);
       }
-
+      else{
+        ledCount++;
+        if (ledCount < 10) {
+          setColor(ledCount, 0, 0);
+        } else if (ledCount < 20) {
+          setColor(20 - ledCount, 0, 0);
+        } else if (ledCount >= 20){
+          ledCount = 0;
+        }
+      }
       break;
 
     default:
       break;
 
 
+  }
+  
+  if (VESCTOOL_MODE){
+    if(before_brake_status != brakeState){
+      pixels.show();
+    }
   }
 
 
