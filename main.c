@@ -173,6 +173,11 @@ APP_TIMER_DEF(m_nrf_timer);
 #define GEAR_BUTTON 0
 
 #define PERIOD_GEAR_BUTTON_TIMER 50
+
+static int gear_waiting(void);
+static int gear_falling(void);
+static int gear_rising(void);
+
 // Private variables
 static ble_nus_t                        m_nus;                                      //NUS: Nordic UART Service initialization structure. /**https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v11.0.0%2Fgroup__ble__sdk__srv__nus.html**/
 static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;
@@ -478,9 +483,44 @@ void uart_event_handle(app_uart_evt_t * p_event) {
 		break;
 	}
 }
-void timer_gear_button_event_handler(void *p_context){
-    // do your things here
+static uint32_t now_millis = 0;
+static uint32_t disable_gear_transition_millis = 0;
+static int gear_waiting(void){
 
+}
+static int gear_falling(void){
+
+}
+static int gear_rising(void){
+
+}
+static int (* gear_state[])(void) = { gear_waiting, gear_falling, gear_rising};
+enum gear_state_codes { waiting, low, high};
+enum ret_codes { repeat, done, rising, falling};
+struct transition {
+    enum gear_state_codes src_state;
+    enum ret_codes   ret_code;
+    enum gear_state_codes dst_state;
+};
+struct transition gear_state_transitions[] = {
+        {waiting, repeat, waiting },
+        {waiting, rising, high },
+        {waiting, falling, low },
+        {high, repeat, high },
+        {high, done, waiting },
+        {low, repeat, low },
+        {low, done, waiting }
+        };
+
+#define EXIT_STATE waiting
+#define ENTRY_STATE waiting
+enum gear_state_codes gear_cur_state = ENTRY_STATE;
+
+void timer_gear_button_event_handler(void *p_context){
+    now_millis+=PERIOD_GEAR_BUTTON_TIMER;
+    int (* gear_state_fun)(void);
+    gear_state_fun = gear_state[gear_cur_state];
+    gear_state_fun();
 }
 
 
