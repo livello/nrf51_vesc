@@ -11,7 +11,7 @@ FW_16K ?= 0
 CFLAGS += $(build_args)
 
 #modify here.
-SDK_ROOT := /home/chans/Downloads/nRF5_SDK_12.3.0_d7731ad
+SDK_ROOT := /home/livello/EmbeddedArm/nRF5_SDK_12.3.0_d7731ad
 PROJ_DIR := .
 
 SD_PATH := $(SDK_ROOT)/components/softdevice/s130/hex/s130_nrf51_2.0.1_softdevice.hex

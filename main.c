@@ -33,6 +33,7 @@
 #include "app_uart.h"
 #include "app_util_platform.h"
 #include "nrf_delay.h"
+#include "nrf_drv_clock.h"
 
 #include "pca10028.h"
 
@@ -161,10 +162,17 @@ do                                                      \
 #define PACKET_BLE						1
 
 APP_TIMER_DEF(m_packet_timer);
+APP_TIMER_DEF(gear_button_timer);
 #ifndef FW_16K
 APP_TIMER_DEF(m_nrf_timer);
 #endif
 
+#define GEAR_IN_A 23
+#define GEAR_IN_B 24
+#define GEAR_SENSOR 30
+#define GEAR_BUTTON 0
+
+#define PERIOD_GEAR_BUTTON_TIMER 50
 // Private variables
 static ble_nus_t                        m_nus;                                      //NUS: Nordic UART Service initialization structure. /**https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v11.0.0%2Fgroup__ble__sdk__srv__nus.html**/
 static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;
@@ -470,6 +478,21 @@ void uart_event_handle(app_uart_evt_t * p_event) {
 		break;
 	}
 }
+void timer_gear_button_event_handler(void *p_context){
+    // do your things here
+
+}
+
+
+static void gear_init(void)
+{
+    nrf_gpio_cfg_output(GEAR_IN_A);
+    nrf_gpio_pin_write(GEAR_IN_A,0);
+    nrf_gpio_cfg_output(GEAR_IN_B);
+    nrf_gpio_pin_write(GEAR_IN_B,0);
+    nrf_gpio_cfg_input(GEAR_BUTTON,NRF_GPIO_PIN_PULLUP);
+
+}
 
 static void uart_init(void) {
 	uint32_t err_code;
@@ -680,7 +703,7 @@ int main(void) {
 	nrf_gpio_cfg_output(LED_PIN);
 	nrf_gpio_pin_clear(LED_PIN);
 
-	APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
+    APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
 	uart_init();
 
 	packet_init(uart_send_buffer, process_packet_vesc, PACKET_VESC);
@@ -691,9 +714,10 @@ int main(void) {
 	services_init();
 	advertising_init();
 	conn_params_init();
+	gear_init();
 
-	app_timer_create(&m_packet_timer, APP_TIMER_MODE_REPEATED, packet_timer_handler);
-	app_timer_start(m_packet_timer, APP_TIMER_TICKS(1, APP_TIMER_PRESCALER), NULL);
+	app_timer_create(&gear_button_timer, APP_TIMER_MODE_REPEATED, timer_gear_button_event_handler);
+	app_timer_start(gear_button_timer, APP_TIMER_TICKS(PERIOD_GEAR_BUTTON_TIMER, APP_TIMER_PRESCALER), NULL);
 
 #ifndef FW_16K
 	app_timer_create(&m_nrf_timer, APP_TIMER_MODE_REPEATED, nrf_timer_handler);
@@ -703,6 +727,8 @@ int main(void) {
 //	esb_timeslot_set_ch_addr(67, 0xC6, 0xC5, 0x0);
 	esb_timeslot_sd_start();
 #endif
+    app_timer_create(&m_packet_timer, APP_TIMER_MODE_REPEATED, packet_timer_handler);
+    app_timer_start(m_packet_timer, APP_TIMER_TICKS(1, APP_TIMER_PRESCALER), NULL);
 
 	ble_advertising_start(BLE_ADV_MODE_FAST);
 
